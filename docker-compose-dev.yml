@@ -4,6 +4,10 @@ services:
     image: 'redis' #get from dockerhub
   node-app:
     restart: always
-    build: . #get from this folder
+    volumes:
+      - ./server:/app
+    build: 
+      context: ./server
+      dockerfile: Dockerfile.dev
     ports: #docker port mapping
       - "4001:8081"

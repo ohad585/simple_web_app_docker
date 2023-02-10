@@ -1,0 +1,9 @@
+version: '1' #docker compose verison
+services:
+  redis-server:
+    image: 'redis' #get from dockerhub
+  node-app:
+    restart: always
+    build: ./server #get from this folder
+    ports: #docker port mapping
+      - "4001:8081"
