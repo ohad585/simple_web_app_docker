@@ -2,12 +2,18 @@ version: '1' #docker compose verison
 services:
   redis-server:
     image: 'redis' #get from dockerhub
-  node-app:
+  server:
     restart: always
     volumes:
       - ./server:/app
     build: 
       context: ./server
       dockerfile: Dockerfile.dev
+  client:
+    volumes:
+      - ./client:/app
+    build: 
+      context: ./client
+      dockerfile: Dockerfile.dev
     ports: #docker port mapping
-      - "4001:8081"
+      - "4001:3000"
