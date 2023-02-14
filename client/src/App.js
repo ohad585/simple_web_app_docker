@@ -1,6 +1,5 @@
 import './App.css';
 import React,{useState,useEffect} from 'react';
-import { useTable } from 'react-table';
 import axios from 'axios';
 
 
@@ -8,112 +7,79 @@ import axios from 'axios';
 
 function App() {
 
-  const [ip,setIP] = useState('');
+ 
+
+  const [main_ip,setIP] = useState('');
+  const [data,setData] = useState([])
+  const [ipList,setIpList] = useState([])
+
+  
     
-    //creating function to load ip address from the API
-    const getData = async()=>{
-        const res = await axios.get('https://geolocation-db.com/json/')
-        console.log(res.data);
-        setIP(res.data.IPv4)
+  //creating function to load ip address from the API
+  const getData = async()=>{
+    const res = await axios.get('https://geolocation-db.com/json/')
+    console.log(res.data);
+    setIP(res.data.IPv4)
+    const res2 = await axios.get('http://localhost:8081/api/values')
+    // const temp = res2.data
+    // console.log("Got data "+temp)
+    // setData(temp)
+    let flag=true
+    for(let temp=0;temp< res2.data.length;temp++){
+      const ip = res2.data[temp].ip
+      const count = res2.data[temp].count
+      console.log("in for, got data "+ip+" "+count+" main ip: "+res.data.IPv4)
+        if(ip===res.data.IPv4){
+            axios.post('http://localhost:8081/api/updatevalue',{"ip":ip,"count":count+1})
+            res2.data[temp].count = res2.data[temp].count +1
+            flag=false
+            break
+        }
     }
+    setData(res2.data)
+    if(flag){
+      axios.post('http://localhost:8081/api/setvalue',{"ip":res.data.IPv4,"count":1})
+      setData([{ip:res.data.IPv4,count:1}])
+    }
+  }
     
-    useEffect(()=>{
-        //passing getData method to the lifecycle method
-        getData()
-    },[])
+  useEffect(()=>{
+      //passing getData method to the lifecycle method
+      console.log("getData useffect");
+      getData()// eslint-disable-next-line
+  },[])
     
-
-  const data = React.useMemo(
-       () => [
-         {
-           col1: 'Hello',
-           col2: 'World',
-         },
-         {
-           col1: 'react-table',
-           col2: 'rocks',
-         },
-         {
-           col1: 'whatever',
-           col2: 'you want',
-         },
-       ],
-       []
-     )
+  
+  const renderValues = ()=>{
+    const entries = []
+    console.log("renderValues data is "+data)
+    for(let temp=0;temp< data.length;temp++){
+      const ip = data[temp].ip
+      const count = data[temp].count
+      entries.push(
+        <div key={ip}>
+            IP: {ip} Visited {count} times
+        </div>
+    )
+    }
+    setIpList(entries)
+  }
    
-     const columns = React.useMemo(
-       () => [
-         {
-           Header: 'IP',
-           accessor: 'col1', // accessor is the "key" in the data
-         },
-         {
-           Header: 'Visits',
-           accessor: 'col2',
-         },
-       ],
-       []
-     )
-   
-     const {
-       getTableProps,
-       getTableBodyProps,
-       headerGroups,
-       rows,
-       prepareRow,
-     } = useTable({ columns, data })
+  useEffect(()=>{
+    console.log("renderValues useffect");
+    if(data.length>0){
+      renderValues()
+    }
+  },[data.length,data[0]])
 
+ 
 
   return (
     <div className="App">
       <header className="App-header">
         <p>Visits Chart</p>
-        
-        <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
-       <thead>
-         {headerGroups.map(headerGroup => (
-           <tr {...headerGroup.getHeaderGroupProps()}>
-             {headerGroup.headers.map(column => (
-               <th
-                 {...column.getHeaderProps()}
-                //  style={{
-                //    borderBottom: 'solid 3px red',
-                //    background: 'aliceblue',
-                //    color: 'black',
-                //    fontWeight: 'bold',
-                //  }}
-               >
-                 {column.render('Header')}
-               </th>
-             ))}
-           </tr>
-         ))}
-       </thead>
-       <tbody {...getTableBodyProps()}>
-         {rows.map(row => {
-           prepareRow(row)
-           return (
-             <tr {...row.getRowProps()}>
-               {row.cells.map(cell => {
-                 return (
-                   <td
-                     {...cell.getCellProps()}
-                    //  style={{
-                    //    padding: '10px',
-                    //    border: 'solid 1px gray',
-                    //    background: 'papayawhip',
-                    //  }}
-                   >
-                     {cell.render('Cell')}
-                   </td>
-                 )
-               })}
-             </tr>
-           )
-         })}
-       </tbody>
-     </table>
-     <p>Your ip {ip}</p>
+        {ipList}
+     <p>Your ip {main_ip}</p>
       </header>
     </div>
   );

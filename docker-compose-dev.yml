@@ -1,7 +1,9 @@
 version: '1' #docker compose verison
 services:
-  redis-server:
-    image: 'redis' #get from dockerhub
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      POSTGRES_PASSWORD: example
   server:
     restart: always
     volumes:
@@ -9,6 +11,14 @@ services:
     build: 
       context: ./server
       dockerfile: Dockerfile.dev
+    environment:
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=example
+      - PGPORT=5432
+    ports:
+      - "8081:8081"
   client:
     volumes:
       - ./client:/app
